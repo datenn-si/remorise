@@ -152,7 +152,7 @@ describe('ChatPage sprite/message overlap', () => {
   it('hands the message background opacity to the layout as its own variable', () => {
     const { container } = renderPage();
     const main = mainElement(container);
-    expect(main?.style.getPropertyValue('--message-bg-opacity')).toBe('100%');
+    expect(main?.style.getPropertyValue('--message-bg-opacity')).toBe('75%');
     act(() => setPreferences({ messageBgOpacity: 70 }));
     expect(main?.style.getPropertyValue('--message-bg-opacity')).toBe('70%');
   });

@@ -49,9 +49,9 @@ describe('preferences: sprite overlap', () => {
     expect(localStorage.getItem('remorise.sprite-overlap')).toBeNull();
   });
 
-  it('defaults the message background opacity to fully opaque', async () => {
+  it('defaults the message background opacity to 75', async () => {
     const { getPreferences } = await loadPreferences();
-    expect(getPreferences().messageBgOpacity).toBe(100);
+    expect(getPreferences().messageBgOpacity).toBe(75);
   });
 
   it('restores a stored message background opacity', async () => {
@@ -90,9 +90,9 @@ describe('preferences: sprite overlap', () => {
     expect(localStorage.getItem('remorise.sprite-split')).toBeNull();
   });
 
-  it('defaults the gradient length to 50%', async () => {
+  it('defaults the gradient length to 20%', async () => {
     const { getPreferences } = await loadPreferences();
-    expect(getPreferences().spriteFade).toBe(50);
+    expect(getPreferences().spriteFade).toBe(20);
   });
 
   it('restores, persists, and clamps the gradient length', async () => {
@@ -137,7 +137,7 @@ describe('preferences: sprite debug blend', () => {
     setPreferences({ spriteDebugFade: 140 });
     expect(getPreferences().spriteDebugFade).toBe(100);
     expect(localStorage.getItem('remorise.sprite-debug-fade')).toBe('100');
-    expect(getPreferences().spriteFade).toBe(50);
+    expect(getPreferences().spriteFade).toBe(20);
     setPreferences({ spriteDebugFade: null });
     expect(getPreferences().spriteDebugFade).toBeNull();
     expect(localStorage.getItem('remorise.sprite-debug-fade')).toBeNull();
@@ -150,7 +150,7 @@ describe('preferences: sprite debug blend', () => {
     setPreferences({ spriteDebugBgOpacity: 10 });
     expect(getPreferences().spriteDebugBgOpacity).toBe(50);
     expect(localStorage.getItem('remorise.sprite-debug-bg-opacity')).toBe('50');
-    expect(getPreferences().messageBgOpacity).toBe(100);
+    expect(getPreferences().messageBgOpacity).toBe(75);
     setPreferences({ spriteDebugBgOpacity: null });
     expect(getPreferences().spriteDebugBgOpacity).toBeNull();
     expect(localStorage.getItem('remorise.sprite-debug-bg-opacity')).toBeNull();
