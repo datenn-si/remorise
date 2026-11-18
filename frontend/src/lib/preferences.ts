@@ -44,13 +44,13 @@ const INSECURE_NOTICE_DISMISSED_KEY = 'remorise.insecure-notice-dismissed';
 // value never read as an overlap.
 const LEGACY_SPRITE_SPLIT_KEY = 'remorise.sprite-split';
 const DEFAULT_HUE = 314;
-export const DEFAULT_SPRITE_FADE = 50;
+export const DEFAULT_SPRITE_FADE = 20;
 // The message column's background opacity over the sprite. The floor
 // keeps the panel color doing real work: at 50% it still halves the
 // contrast of whatever stands behind the text, while below it the
 // sprite's detail starts competing with the words directly.
 export const MESSAGE_BG_OPACITY_MIN = 50;
-export const DEFAULT_MESSAGE_BG_OPACITY = 100;
+export const DEFAULT_MESSAGE_BG_OPACITY = 75;
 // The foreground (text and items) opacity shares the background's
 // floor: the words may melt into the sprite as far as the panel
 // behind them does, but never further.

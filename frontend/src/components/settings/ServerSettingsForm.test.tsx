@@ -87,20 +87,24 @@ describe('ServerSettingsForm', () => {
     expect(await screen.findByText('保存しました。')).toBeTruthy();
   });
 
-  it('greys out fields switched off by a checkbox', async () => {
+  it('greys out only the input of fields switched off by a checkbox', async () => {
     mockedGet.mockResolvedValue({ ...BASE, memory_decay_enabled: false });
     render(<ServerSettingsForm />);
-    // Gated by the group's (off) checkbox.
+    // Gated by the group's (off) checkbox: the input greys out.
     const threshold = await screen.findByLabelText('忘却する保持スコアのしきい値');
-    expect(threshold.closest('div')?.className).toContain('saturate-0');
-    // An optional sampling field with no value in force is off, so greyed.
+    expect(threshold.className).toContain('saturate-0');
+    // An optional sampling field with no value in force is off, so its
+    // input greys out — but the checkbox that would enable it must not:
+    // it stays full strength so it reads as the way to turn it on.
     const temperature = screen.getByLabelText('Temperature');
-    expect(temperature.closest('div')?.className).toContain('saturate-0');
+    expect(temperature.className).toContain('saturate-0');
+    const enable = screen.getByLabelText('Temperatureを有効にする');
+    expect(enable.closest('div')?.className).not.toContain('saturate-0');
     // A field with no gate stays full strength.
     const archive = screen.getByLabelText(
       'アーカイブの自動物理削除までの日数（0で自動削除しない）',
     );
-    expect(archive.closest('div')?.className).not.toContain('saturate-0');
+    expect(archive.className).not.toContain('saturate-0');
   });
 
   it('sends null for a cleared sampling field (reset to unset)', async () => {

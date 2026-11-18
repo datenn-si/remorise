@@ -398,7 +398,9 @@ export function ServerSettingsForm() {
             {group.fields.map((field) => {
               // A field switched off by a checkbox (its own, for the
               // optional sampling fields, or its group's gate) is not
-              // in effect: it reads as inactive, desaturated and grey.
+              // in effect: its input reads as inactive, desaturated
+              // and grey. The checkbox itself stays full strength, so
+              // it still reads as the way to switch the field on.
               const inactive =
                 field.kind === 'number' &&
                 ((field.optional && !(enabled[field.key] ?? false)) ||
@@ -420,10 +422,7 @@ export function ServerSettingsForm() {
                   {values.overridden.includes(field.key) ? <DbBadge /> : null}
                 </label>
               ) : (
-                <div
-                  key={field.key}
-                  className={`grid gap-1 text-sm ${inactive ? 'saturate-0 opacity-60' : ''}`}
-                >
+                <div key={field.key} className="grid gap-1 text-sm">
                   <span className="flex items-center gap-2">
                     {field.optional ? (
                       <input
@@ -445,7 +444,7 @@ export function ServerSettingsForm() {
                     {values.overridden.includes(field.key) ? (
                       <button
                         type="button"
-                        className="text-xs text-muted underline"
+                        className="cursor-pointer text-xs text-muted underline"
                         disabled={busy}
                         onClick={() => void resetField(field.key)}
                       >
@@ -457,7 +456,7 @@ export function ServerSettingsForm() {
                     id={`server-settings-${field.key}`}
                     type="number"
                     step={field.step}
-                    className={fieldClass}
+                    className={`${fieldClass} ${inactive ? 'saturate-0 opacity-60' : ''}`}
                     value={draft[field.key] ?? ''}
                     placeholder={
                       values.base_values[field.key] == null
