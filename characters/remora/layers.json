@@ -1,0 +1,385 @@
+{
+  "image": {
+    "width": 1024,
+    "height": 1536
+  },
+  "frame_mode": {
+    "eyes": "stack",
+    "tears": "switch",
+    "mouth": "stack"
+  },
+  "paint": [
+    "pose",
+    "expression",
+    "mouth",
+    "eyes",
+    "tears",
+    "extras",
+    "mark"
+  ],
+  "poses": {
+    "arms-down": {
+      "label": "両手を伸ばした状態",
+      "layers": [
+        {
+          "path": "17_fins/01_right.png",
+          "depth": "rear"
+        },
+        {
+          "path": "17_fins/02_left.png",
+          "depth": "rear"
+        },
+        "16_body.png"
+      ]
+    },
+    "arms-on-hips": {
+      "label": "両手を腰に当てた状態",
+      "layers": [
+        {
+          "path": "17_fins/01_right.png",
+          "depth": "rear"
+        },
+        {
+          "path": "17_fins/02_left.png",
+          "depth": "rear"
+        },
+        "15_hip.png"
+      ]
+    }
+  },
+  "expressions": {
+    "normal": {
+      "base": null,
+      "mouth": [
+        null,
+        "14_normal/02_open-mouth.1.png",
+        "14_normal/01_open-mouth.2.png"
+      ],
+      "eyes_left": [
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ]
+      ],
+      "eyes_right": [
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ],
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ],
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ]
+      ]
+    },
+    "affectionate": {
+      "base": "06_affectionate/03_base.png",
+      "mouth": [
+        null,
+        "06_affectionate/02_open-mouth.1.png",
+        "06_affectionate/01_open-mouth.2.png"
+      ],
+      "eyes_left": [
+        [],
+        [
+          "05_closed-eye/05_affectionate-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/05_affectionate-overlay-left.png"
+        ]
+      ]
+    },
+    "angry": {
+      "base": "07_angry/03_base.png",
+      "mouth": [
+        null,
+        "07_angry/02_open-mouth.1.png",
+        "07_angry/01_open-mouth.2.png"
+      ],
+      "eyes_left": [
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ]
+      ],
+      "eyes_right": [
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ],
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ],
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ]
+      ]
+    },
+    "anxious": {
+      "base": "08_anxious/03_base.png",
+      "mouth": [
+        null,
+        "08_anxious/02_open-mouth.1.png",
+        "08_anxious/01_open-mouth.2.png"
+      ],
+      "eyes_left": [
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ]
+      ],
+      "eyes_right": [
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ],
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ],
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ]
+      ]
+    },
+    "embarrassed": {
+      "base": "09_embarrassed/03_base.png",
+      "mouth": [
+        null,
+        "09_embarrassed/02_open-mouth.1.png",
+        "09_embarrassed/01_open-mouth.2.png"
+      ],
+      "eyes_left": [
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ]
+      ],
+      "eyes_right": [
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ],
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ],
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ]
+      ]
+    },
+    "happy": {
+      "base": "10_happy/03_base.png",
+      "mouth": [
+        null,
+        "10_happy/02_open-mouth.1.png",
+        "10_happy/01_open-mouth.2.png"
+      ]
+    },
+    "puzzled": {
+      "base": "11_puzzled/03_base.png",
+      "mouth": [
+        null,
+        "11_puzzled/02_mouth-open.1.png",
+        "11_puzzled/01_mouth-open.2.png"
+      ]
+    },
+    "sad": {
+      "base": "12_sad/03_base.png",
+      "mouth": [
+        null,
+        "12_sad/02_open-mouth.1.png",
+        "12_sad/01_open-mouth.2.png"
+      ],
+      "eyes_left": [
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ],
+        [
+          "05_closed-eye/04_cheek-overlay-left.png"
+        ]
+      ],
+      "eyes_right": [
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ],
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ],
+        [
+          "05_closed-eye/01_cheek-overlay-right.png"
+        ]
+      ]
+    },
+    "surprised": {
+      "base": "13_surprised/03_base.png",
+      "mouth": [
+        null,
+        "13_surprised/02_mouth-open.1.png",
+        "13_surprised/01_mouth-open.2.png"
+      ]
+    }
+  },
+  "eyes_left": [
+    [],
+    [
+      "05_closed-eye/07_left-eye.1.png"
+    ],
+    [
+      "05_closed-eye/06_left-eye.2.png"
+    ]
+  ],
+  "eyes_right": [
+    [],
+    [
+      "05_closed-eye/03_right-eye.1.png"
+    ],
+    [
+      "05_closed-eye/02_right-eye.2.png"
+    ]
+  ],
+  "tears_left": [
+    [
+      "04_tears/06_left.0.png"
+    ],
+    [
+      "04_tears/05_left.1.png"
+    ],
+    [
+      "04_tears/04_left.2.png"
+    ]
+  ],
+  "tears_right": [
+    [
+      "04_tears/03_right.0.png"
+    ],
+    [
+      "04_tears/02_right.1.png"
+    ],
+    [
+      "04_tears/01_right.2.png"
+    ]
+  ],
+  "extras": {
+    "sweat": "03_sweatdrops.png",
+    "blush": "02_blush.png"
+  },
+  "marks": {
+    "thinking": "01_marks/01_thinking.png",
+    "affectionate": "01_marks/02_affectionate.png",
+    "angry": "01_marks/03_angry.png",
+    "puzzled": "01_marks/04_puzzled.png",
+    "surprised": "01_marks/05_surprised.png"
+  },
+  "blink": {
+    "cycle": [
+      1,
+      2,
+      1,
+      0
+    ],
+    "stepMs": 90,
+    "perMinute": 12,
+    "hurriedPerMinute": 24,
+    "minGapMs": 1000,
+    "hurriedExpressions": []
+  },
+  "talk": {
+    "cycle": [
+      0,
+      1,
+      2,
+      1
+    ],
+    "intervalMs": 120
+  },
+  "emotions": {
+    "neutral": {
+      "pose": "arms-down",
+      "expression": "normal",
+      "mark": null,
+      "extras": [],
+      "tears": false
+    },
+    "happy": {
+      "pose": "arms-down",
+      "expression": "happy",
+      "mark": null,
+      "extras": [],
+      "tears": false
+    },
+    "sad": {
+      "pose": "arms-down",
+      "expression": "sad",
+      "mark": null,
+      "extras": [],
+      "tears": true
+    },
+    "angry": {
+      "pose": "arms-on-hips",
+      "expression": "angry",
+      "mark": "angry",
+      "extras": [],
+      "tears": false
+    },
+    "embarrassed": {
+      "pose": "arms-down",
+      "expression": "embarrassed",
+      "mark": null,
+      "extras": [
+        "blush"
+      ],
+      "tears": false
+    },
+    "surprised": {
+      "pose": "arms-down",
+      "expression": "surprised",
+      "mark": "surprised",
+      "extras": [],
+      "tears": false
+    },
+    "anxious": {
+      "pose": "arms-down",
+      "expression": "anxious",
+      "mark": null,
+      "extras": [
+        "sweat"
+      ],
+      "tears": false
+    },
+    "affectionate": {
+      "pose": "arms-down",
+      "expression": "affectionate",
+      "mark": "affectionate",
+      "extras": [],
+      "tears": false
+    },
+    "puzzled": {
+      "pose": "arms-down",
+      "expression": "puzzled",
+      "mark": "puzzled",
+      "extras": [],
+      "tears": false
+    }
+  }
+}
