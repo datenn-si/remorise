@@ -1,0 +1,63 @@
+name: バグ報告
+description: 再現手順のあるバグを報告する
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        バグの報告ありがとうございます。
+        質問、相談、新機能の提案は、Issue ではなく Discussions へお願いします。
+  - type: input
+    id: version
+    attributes:
+      label: Remorise のバージョン
+      description: 「latest」ではなく、具体的なバージョンを書いてください。
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: Windows 11
+    validations:
+      required: true
+  - type: input
+    id: llm
+    attributes:
+      label: LLM サーバーとモデル
+      description: 接続先のソフト（llama.cpp など）と、使っているモデル名を書いてください。
+      placeholder: llama.cpp / Qwen3.8-27B (GGUF)
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: どのような操作で起きるか、順番に書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する動作
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: スクリーンショット
+      description: 画面の表示など UI の問題の場合は、その画面のスクリーンショットを貼ってください。画像はこの欄へドラッグ＆ドロップで貼れます。UI の問題でなければ空欄で構いません。
+  - type: textarea
+    id: logs
+    attributes:
+      label: ログやエラーメッセージ
+      description: ターミナルの出力や、画面に表示されたエラーを貼ってください。無ければ空欄で構いません。
+      render: text

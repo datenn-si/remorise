@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 質問、相談、新機能の提案
+    url: https://github.com/datenn-si/remorise/discussions
+    about: Issue ではなく Discussions へお願いします。
+  - name: 脆弱性の報告
+    url: https://github.com/datenn-si/remorise/security/advisories/new
+    about: 公開の Issue には書かず、非公開の報告機能を使ってください。
