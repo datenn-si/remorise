@@ -1,0 +1,260 @@
+@import 'tailwindcss';
+
+@plugin '../iconify-dynamic-plugin.mjs';
+
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* On small screens the message column overlaps the sprite: its content
+   fades in over the overlap so foreground and background melt into
+   each other instead of the panel background alone fading over a
+   hard-edged foreground. The blend length is the reader's gradient
+   preference (--sprite-fade, a share of the message column's height,
+   set by the layout) and never runs past the overlap itself. Only
+   this top blend is a preference: the sprite's own dissolve at its
+   feet below stays a fixed length.
+   Both layers share one opacity model over that distance: the panel
+   background ramps from transparent up to the reader's background
+   opacity (--message-bg-opacity), and the content mask below ramps
+   over the same distance up to fully visible — the endpoint differs
+   on purpose, so the sprite can stay ghosted behind the panel while
+   the words themselves never wash out. */
+@media (width < 48rem) {
+  .sprite-fg-fade {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      black min(var(--sprite-overlap), var(--sprite-fade))
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      black min(var(--sprite-overlap), var(--sprite-fade))
+    );
+  }
+
+  /* The sprite art dissolves over its last stretch instead of ending
+     on a hard edge: once the message background can be translucent,
+     the cut-off at the bottom of the sprite box would show straight
+     through it. Kept slight — just enough to hide the seam. */
+  .sprite-art-fade {
+    -webkit-mask-image: linear-gradient(to bottom, black 92%, transparent);
+    mask-image: linear-gradient(to bottom, black 92%, transparent);
+  }
+}
+
+:root {
+  --sprite-fade: 50%;
+  --message-bg-opacity: 100%;
+  --fg-opacity: 100%;
+}
+
+/* The reader's foreground opacity, applied per item: the words and
+   controls over the sprite can melt into it as far as the panel
+   behind them does. Set through --fg-opacity by the layout; the
+   items never overlap each other, so per-item and group opacity
+   read the same here. */
+.fg-items > * {
+  opacity: var(--fg-opacity);
+}
+
+/* Hue 314 matches the logo's violet gradient. One hue shifts every chrome color except danger actions. Sprites are not filtered. */
+:root {
+  --hue: 314;
+  color-scheme: dark;
+}
+
+@theme {
+  --font-sans: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', 'Noto Sans JP', sans-serif;
+  --color-canvas: oklch(0.178 0.012 var(--hue));
+  --color-panel: oklch(0.22 0.014 var(--hue));
+  --color-panel-2: oklch(0.268 0.016 var(--hue));
+  --color-line: oklch(0.39 0.022 var(--hue));
+  --color-ink: oklch(0.95 0.012 var(--hue));
+  --color-muted: oklch(0.74 0.022 var(--hue));
+  --color-gold: oklch(0.83 0.055 var(--hue));
+  /* Gold as text needs its own step in the light scheme: the fill's lightness fails AA for text, and darkening the fill instead would break the dark label on the primary button. */
+  --color-gold-text: oklch(0.83 0.055 var(--hue));
+  --color-on-gold: #24180f;
+  --color-danger: oklch(0.8 0.07 calc(var(--hue) - 28));
+  --color-danger-panel: color-mix(in oklch, var(--color-danger) 20%, var(--color-panel));
+  --color-danger-solid: oklch(0.52 0.2 25);
+  --color-danger-solid-hover: oklch(0.46 0.18 25);
+  --color-on-danger: #fff;
+  --color-user: oklch(0.32 0.022 var(--hue));
+}
+
+:root[data-scheme='light'] {
+  color-scheme: light;
+  --color-canvas: oklch(0.97 0.01 var(--hue));
+  --color-panel: oklch(0.945 0.014 var(--hue));
+  --color-panel-2: oklch(0.91 0.018 var(--hue));
+  --color-line: oklch(0.78 0.02 var(--hue));
+  --color-ink: oklch(0.28 0.02 var(--hue));
+  --color-muted: oklch(0.48 0.02 var(--hue));
+  --color-gold: oklch(0.62 0.1 var(--hue));
+  --color-gold-text: oklch(0.52 0.1 var(--hue));
+  --color-danger: oklch(0.52 0.12 calc(var(--hue) - 28));
+  --color-user: oklch(0.92 0.03 var(--hue));
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-scheme='device'] {
+    color-scheme: light;
+    --color-canvas: oklch(0.97 0.01 var(--hue));
+    --color-panel: oklch(0.945 0.014 var(--hue));
+    --color-panel-2: oklch(0.91 0.018 var(--hue));
+    --color-line: oklch(0.78 0.02 var(--hue));
+    --color-ink: oklch(0.28 0.02 var(--hue));
+    --color-muted: oklch(0.48 0.02 var(--hue));
+    --color-gold: oklch(0.62 0.1 var(--hue));
+    --color-gold-text: oklch(0.52 0.1 var(--hue));
+    --color-danger: oklch(0.52 0.12 calc(var(--hue) - 28));
+    --color-user: oklch(0.92 0.03 var(--hue));
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+@layer base {
+  dialog {
+    max-width: calc(100% - 2rem);
+    margin: auto;
+    padding: 0;
+    color: inherit;
+  }
+
+  input[type='checkbox'],
+  input[type='range'] {
+    accent-color: var(--color-gold);
+  }
+
+  input[type='range'] {
+    /* A vertical touch drag starting on the slider scrolls the page
+       instead of changing the value; only a horizontal drag adjusts.
+       RangeInput additionally holds back the value jump a touch on
+       the track would otherwise cause at pointer-down, so a tap or
+       a scroll that starts on the bar never moves the value. */
+    touch-action: pan-y;
+  }
+
+  input[type='checkbox'] {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.character-markdown > :first-child {
+  margin-top: 0;
+}
+
+.character-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.character-markdown p,
+.character-markdown ul,
+.character-markdown ol,
+.character-markdown pre,
+.character-markdown table {
+  margin: 0.4rem 0;
+}
+
+.character-markdown a {
+  color: var(--color-gold-text);
+}
+
+.character-markdown pre {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  background: var(--color-canvas);
+  padding: 0.75rem;
+}
+
+.character-markdown code {
+  font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+}
+
+.character-markdown table {
+  border-collapse: collapse;
+}
+
+.character-markdown th,
+.character-markdown td {
+  border: 1px solid var(--color-line);
+  padding: 0.25rem 0.5rem;
+}
+
+.legal-markdown h1 {
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+}
+
+.legal-markdown h2 {
+  font-size: 1rem;
+  color: var(--color-gold-text);
+  margin: 1.75rem 0 0.5rem;
+}
+
+.legal-markdown p {
+  margin: 0.5rem 0;
+}
+
+.legal-markdown ul,
+.legal-markdown ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.legal-markdown ul {
+  list-style: disc;
+}
+
+.legal-markdown ol {
+  list-style: decimal;
+}
+
+.legal-markdown li {
+  margin: 0.25rem 0;
+}
+
+.legal-markdown a {
+  color: var(--color-gold-text);
+  text-decoration: underline;
+}
+
+dialog::backdrop {
+  background: rgb(10 8 6 / 0.72);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
