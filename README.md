@@ -14,7 +14,8 @@
 
 ![Remorise のバナー](docs/assets/banner.png)
 
-ローカル LLM と会話するキャラクターアプリです。
+ローカル LLM と会話するキャラクターチャットアプリです。
+
 一つの会話として、チャット、長期記憶、感情、好感度を保持します。
 
 > [!WARNING]
@@ -60,6 +61,8 @@
 デスクトップでの会話です。
 感情と好感度がヘッダーに表示され、立ち絵の表情に反映されます。
 
+---
+
 <!-- markdownlint-disable MD033 -->
 <img src="docs/assets/screenshots/chat-mobile.png" alt="スマートフォンのチャット画面" width="360" />
 <!-- markdownlint-enable MD033 -->
@@ -67,21 +70,31 @@
 スマートフォンでの会話です。
 立ち絵の上にメッセージが重なって表示されます。
 
+---
+
 ![デバッグ表示を有効にしたチャット画面](docs/assets/screenshots/chat-debug.png)
 
 デバッグ表示を有効にすると、前段処理の内容（感情、気分、好感度の変化、記憶の検索と作成）がその場で確認できます。
+
+---
 
 ![キャラクター画面](docs/assets/screenshots/character.png)
 
 キャラクターの設定と、現在の感情や好感度です。
 
+---
+
 ![立ち絵デバッグ画面](docs/assets/screenshots/sprite-debug.png)
 
 立ち絵デバッグでは、表情、ポーズ、目や口の状態、モーションを個別に確認できます。
 
+---
+
 ![設定画面](docs/assets/screenshots/settings.png)
 
 設定画面です。テーマの色相や、サーバーの動作を調整できます。
+
+---
 
 <!-- markdownlint-disable MD033 -->
 <img src="docs/assets/remora.png" alt="同梱キャラクター「レモラ」の立ち絵" width="360" />
