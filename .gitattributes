@@ -1,0 +1,6 @@
+* text=auto eol=lf
+# .bat / .cmd の中身は ASCII のみ + CRLF とする。マルチバイト文字を入れると
+# コードページ次第で cmd のパーサが読み位置をずらすため、メッセージは英語と
+# エラーコードで書き、日本語の説明は README に置く。
+*.bat text eol=crlf
+*.cmd text eol=crlf

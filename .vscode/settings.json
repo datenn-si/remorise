@@ -1,0 +1,6 @@
+{
+  "cSpell.words": ["Remorise", "tailnet"],
+  "python.analysis.extraPaths": ["backend"],
+  "python.analysis.typeCheckingMode": "off",
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/Scripts/python.exe"
+}
