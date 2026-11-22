@@ -20,7 +20,7 @@ API への接続先は、画面と同じオリジンです。開発時は Vite �
 
 立ち絵のレイヤー設定と画像はバックエンドの `/api/character/layers` と `/api/character/assets/` から取得します。Vite の静的配信資産にはユーザーキャラクターを含めません。
 
-アイコンの `icon-[mdi--*]` クラスは、`../iconify-dynamic-plugin.mjs` が生成します。これは公式の `@iconify/tailwind4` の dynamic 部分だけを使う薄いラッパーです。パッケージ本体のプラグイン（`lib/plugin.js`）は、使わない機能（@iconify/tools や SVGO）の読み込みで CSS のビルドが遅くなるため、経由しません。生成される CSS は本体プラグインと同じです。
+アイコンの `icon-[mdi--*]` クラスは、`./iconify-dynamic-plugin.mjs` が生成します。これは公式の `@iconify/tailwind4` の dynamic 部分だけを使う薄いラッパーです。パッケージ本体のプラグイン（`lib/plugin.js`）は、使わない機能（@iconify/tools や SVGO）の読み込みで CSS のビルドが遅くなるため、経由しません。生成される CSS は本体プラグインと同じです。
 
 ## 確認
 

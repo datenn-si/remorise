@@ -17,7 +17,7 @@ tailnet 内のサービス（Remorise など）を HTTPS で公開し、ブラ�
 ## 手順
 
 1. Tailscale の管理コンソールで、DNS の設定から HTTPS 証明書を有効化します。
-2. Remorise を localhost で待ち受けます。`python prod.py` や `python dev.py` を `--host` 引数なしで起動すればよいです。
+2. Remorise を 127.0.0.1 で待ち受けます。`python prod.py` や `python dev.py` を `--host` 引数なしで起動すればよいです。
 3. そのマシンで `tailscale serve --bg <ポート番号>` を実行します。  
    コマンド書式はバージョンで変わるため、実行前に `tailscale serve --help` で確認してください。また、ポート番号は下記の表を参照してください。
 4. `https://<ホスト名>.<tailnet名>.ts.net` でアクセスします。
@@ -42,7 +42,7 @@ tailnet 内のサービス（Remorise など）を HTTPS で公開し、ブラ�
 - 証明書を発行すると、ホスト名と tailnet 名の組が証明書の透明性ログ（CT ログ）に公開記録として残り、CT ログを検索できる公開サービスなどで誰でもそれを検索できます。
 - そのため tailnet 名は自動生成のランダムなままにし、ホスト名も本名やハンドルに結びつかない普遍的な単語にしておくことを推奨します。
 - HTTPS 化してもアプリ側に認証が付くわけではありません。tailnet に入っている端末からは無認証で使える状態は変わらないため、念のため到達範囲は ACL の Grants で制限しておくとよいです。
-- Serve を使う場合、アプリは tailnet の IP に直接バインドせず localhost 待受にする方が安全です。Serve が localhost から中継して Remorise をホストします。
+- Serve を使う場合、アプリは tailnet の IP に直接バインドせず 127.0.0.1 待受にする方が安全です。Serve が 127.0.0.1 から中継して Remorise をホストします。
 
 > [!CAUTION]
 > Funnel という tailnet の外（インターネット）へ公開する機能を利用して全世界へ**公開しないでください!!!** Remorise には認証機能がないため、セキュリティ上のリスクが発生します。
