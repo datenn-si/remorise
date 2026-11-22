@@ -91,7 +91,9 @@ python dev.py
 
 ログには `[backend]` と `[frontend]` のラベルが付いて、このターミナルにまとめて表示されます。
 
-バックエンドは `uv sync` 済みの仮想環境 Python（無ければ `uv run`）で `uvicorn --reload` を、フロントエンドは Vite を直接起動します。
+バックエンドは `uv sync` 済みの仮想環境 Python（無ければ `uv run`）で `uvicorn --reload` を起動します。
+
+フロントエンドは、Windows では `node` から `frontend/node_modules/vite/bin/vite.js` を直接起動し、それ以外では `pnpm dev` を起動します。Windows だけ処理を分けているのは、Windows で pnpm のコマンドシムを経由すると、別のコンソール窓（黒窓）が開くためです。
 
 どちらか一方が終了しても、もう一方は動き続けます。両方を止めるときは `Ctrl+C` を押してください。
 
@@ -113,6 +115,8 @@ python prod.py
 `http://127.0.0.1:8000` で画面と API の両方が同じオリジンで開けます。
 
 ビルドは `python prod.py --build` でも実行できます（起動前にフロントエンドのビルドを回します）。
+
+Windows では、`pnpm` を経由せず、`node` から `frontend/node_modules/typescript/bin/tsc` の `-b` と `frontend/node_modules/vite/bin/vite.js` の `build` を順に実行します。それ以外は `pnpm build` です。こちらも Windows だけ処理を分けているのは、Windows で pnpm のコマンドシムを経由すると、別のコンソール窓（黒窓）が開くためです。
 
 リロードは効かないので、コードを変えたら再起動してください。
 
