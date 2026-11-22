@@ -5,6 +5,7 @@ from sqlalchemy import Text, cast, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Memory
+from app.services.memory_lifecycle import STATUS_ACTIVE, STATUS_FORGOTTEN
 
 
 def split_terms(query: str) -> list[str]:
@@ -94,14 +95,9 @@ class FTS5SearchProvider:
         query: str,
         limit: int = 5,
         *,
-        include_inactive: bool = False,
+        status: str = STATUS_ACTIVE,
     ) -> list[Memory]:
-        hits = await self.search_detailed(
-            session,
-            query,
-            limit,
-            include_inactive=include_inactive,
-        )
+        hits = await self.search_detailed(session, query, limit, status=status)
         return [hit.memory for hit in hits]
 
     async def search_detailed(
@@ -110,20 +106,21 @@ class FTS5SearchProvider:
         query: str,
         limit: int = 5,
         *,
-        include_inactive: bool = False,
+        status: str = STATUS_ACTIVE,
     ) -> list[SearchHit]:
         terms = split_terms(query)
         if not terms:
             return []
-        limit = max(1, min(limit, 50))
+        # The caller owns the cap. Stage A passes its own limit; the
+        # browsing API passes the request's limit. Do not clamp here.
         fts_terms = [term for term in terms if len(term) >= 3]
         short_terms = [term for term in terms if len(term) < 3]
 
         ids: list[int] = []
         if fts_terms:
-            ids.extend(await self._fts_ids(session, fts_terms, limit, include_inactive))
+            ids.extend(await self._fts_ids(session, fts_terms, limit, status))
         if short_terms:
-            literal = await self._literal_matches(session, short_terms, limit, include_inactive)
+            literal = await self._literal_matches(session, short_terms, limit, status)
             short_ids = [memory.id for memory in literal if memory.id not in ids]
             # Short terms (often proper nouns like 日本) only have the literal
             # path; reserve room for them at the tail instead of letting a
@@ -134,7 +131,7 @@ class FTS5SearchProvider:
         if len(ids) < limit:
             # FTS body is thin: fall back to literal matching over all terms
             # so wording the trigram index cannot phrase-match still surfaces.
-            literal = await self._literal_matches(session, terms, limit, include_inactive)
+            literal = await self._literal_matches(session, terms, limit, status)
             ids.extend(memory.id for memory in literal)
             ids = list(dict.fromkeys(ids))
         ids = ids[:limit]
@@ -163,11 +160,9 @@ class FTS5SearchProvider:
         session: AsyncSession,
         terms: list[str],
         limit: int,
-        include_inactive: bool,
+        status: str,
     ) -> list[int]:
-        filters = ""
-        if not include_inactive:
-            filters += " AND m.is_active = 1"
+        clause, params = _status_params(status)
         fts_query = " OR ".join(
             f'{{content keywords specific_terms category}} : "{term.replace(chr(34), chr(34) * 2)}"'
             for term in terms
@@ -178,12 +173,12 @@ class FTS5SearchProvider:
                 SELECT m.id
                 FROM memories_fts
                 JOIN memories AS m ON m.id = memories_fts.rowid
-                WHERE memories_fts MATCH :query{filters}
+                WHERE memories_fts MATCH :query{clause}
                 ORDER BY bm25(memories_fts) / MAX(m.importance, 1), m.last_reinforced_at DESC
                 LIMIT :limit
                 """
             ),
-            {"query": fts_query, "limit": limit},
+            {"query": fts_query, "limit": limit, **params},
         )
         return [row.id for row in result]
 
@@ -192,7 +187,7 @@ class FTS5SearchProvider:
         session: AsyncSession,
         terms: list[str],
         limit: int,
-        include_inactive: bool,
+        status: str,
     ) -> list[Memory]:
         escaped_terms = [
             term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") for term in terms
@@ -207,9 +202,20 @@ class FTS5SearchProvider:
             )
         ]
         statement = select(Memory).where(or_(*conditions))
-        if not include_inactive:
-            statement = statement.where(Memory.is_active.is_(True))
+        if status == STATUS_ACTIVE:
+            statement = statement.where(Memory.status == STATUS_ACTIVE)
+        elif status == STATUS_FORGOTTEN:
+            statement = statement.where(Memory.status == STATUS_FORGOTTEN)
         statement = statement.order_by(
             Memory.importance.desc(), Memory.last_reinforced_at.desc()
         ).limit(limit)
         return list((await session.scalars(statement)).all())
+
+
+def _status_params(status: str) -> tuple[str, dict[str, str]]:
+    """``all`` leaves the status open. The other two values are bound,
+    never interpolated, and match the list endpoint's filter.
+    """
+    if status in (STATUS_ACTIVE, STATUS_FORGOTTEN):
+        return " AND m.status = :status", {"status": status}
+    return "", {}

@@ -25,7 +25,7 @@ export function MemoryList({
           <button
             type="button"
             onClick={() => onOpen(memory.id)}
-            className="w-full rounded-2xl border border-line bg-panel px-4 py-3 text-left hover:border-gold"
+            className="w-full cursor-pointer rounded-2xl border border-line bg-panel px-4 py-3 text-left hover:border-gold"
           >
             <span className="flex flex-wrap items-center gap-2 text-xs text-muted">
               <span className="rounded-full border border-line px-2 py-0.5">

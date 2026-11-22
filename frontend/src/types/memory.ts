@@ -4,6 +4,14 @@ export type MemoryCategory = (typeof MEMORY_CATEGORIES)[number];
 
 export type MemoryStatus = 'active' | 'forgotten';
 
+/** List and search filter. `all` is every row, not a stored status. */
+export type MemoryStatusFilter = 'all' | MemoryStatus;
+
+export type MemoryPage = {
+  memories: Memory[];
+  has_more: boolean;
+};
+
 export type MemoryProvenance = 'explicit' | 'inferred';
 
 /**

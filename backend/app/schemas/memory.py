@@ -38,3 +38,14 @@ class MemoryResponse(BaseModel):
     last_restored_at: datetime | None
     restoration_count: int
     last_reinforced_at: datetime
+
+
+class MemoryPage(BaseModel):
+    """One page of the memory list, highest id first.
+
+    ``has_more`` is true when a smaller id than the last row still
+    matches the filter. The next page takes ``before_id`` of that id.
+    """
+
+    memories: list[MemoryResponse]
+    has_more: bool
