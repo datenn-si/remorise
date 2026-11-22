@@ -350,7 +350,7 @@ async def agent_search(
     if not terms:
         return {"status": "no_hit", "hits": []}
     hits = await search_provider.search_detailed(
-        session, " ".join(terms), _AGENT_SEARCH_LIMIT, include_inactive=True
+        session, " ".join(terms), _AGENT_SEARCH_LIMIT, status="all"
     )
     results: list[dict] = []
     reached: list[Memory] = []
@@ -874,5 +874,16 @@ async def record_links(
     await session.flush()
 
 
-async def search_memories_simple(session: AsyncSession, query: str, limit: int = 5) -> list[Memory]:
-    return await search_provider.search(session, query, limit)
+async def search_memories_simple(
+    session: AsyncSession,
+    query: str,
+    limit: int = 5,
+    *,
+    status: str = "active",
+) -> list[Memory]:
+    """Relevance search with no lifecycle side effects.
+
+    The browsing API uses this. Stage A uses ``agent_search``, which
+    is the path that recalls, restores, and stamps access.
+    """
+    return await search_provider.search(session, query, limit, status=status)

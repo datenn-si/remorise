@@ -1,12 +1,13 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoriesPage } from './MemoriesPage';
-import { getMemory, listMemories } from '../services/memories';
+import { getMemory, listMemories, searchMemories } from '../services/memories';
 import type { Memory } from '../types/memory';
 
 vi.mock('../services/memories', () => ({
   listMemories: vi.fn(),
+  searchMemories: vi.fn(),
   getMemory: vi.fn(),
 }));
 
@@ -22,6 +23,7 @@ beforeAll(() => {
 });
 
 const mockedList = vi.mocked(listMemories);
+const mockedSearch = vi.mocked(searchMemories);
 const mockedGet = vi.mocked(getMemory);
 
 const STATE_MEMORY: Memory = {
@@ -61,7 +63,8 @@ function renderPage() {
 }
 
 beforeEach(() => {
-  mockedList.mockResolvedValue([STATE_MEMORY]);
+  mockedList.mockResolvedValue({ memories: [STATE_MEMORY], has_more: false });
+  mockedSearch.mockResolvedValue([STATE_MEMORY]);
   mockedGet.mockResolvedValue(STATE_MEMORY);
 });
 
@@ -92,5 +95,25 @@ describe('MemoriesPage (read-only)', () => {
     expect(screen.queryByRole('button', { name: '追加する' })).toBeNull();
     expect(screen.queryByText('記憶を追加')).toBeNull();
     expect(document.querySelector('textarea')).toBeNull();
+    expect(screen.queryByText('忘却した記憶も表示')).toBeNull();
+  });
+
+  it('reloads from the start when the filter or the query changes', async () => {
+    renderPage();
+    await screen.findByRole('button', { name: /京都に住んでいる/ });
+
+    fireEvent.change(screen.getByLabelText('状態'), { target: { value: 'forgotten' } });
+    await waitFor(() => {
+      expect(mockedList).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'forgotten' }));
+    });
+    expect(mockedList.mock.lastCall?.[0]?.beforeId).toBeUndefined();
+
+    fireEvent.change(screen.getByLabelText('検索'), { target: { value: '京都' } });
+    fireEvent.click(screen.getByRole('button', { name: '検索' }));
+    await waitFor(() => {
+      expect(mockedSearch).toHaveBeenCalledWith(
+        expect.objectContaining({ query: '京都', status: 'forgotten' }),
+      );
+    });
   });
 });
