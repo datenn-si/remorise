@@ -109,7 +109,6 @@ class Settings(BaseSettings):
     remorise_profile: str = ""
     database_url: str | None = None
     llm_context_size: int = Field(default=16384, gt=0)
-    context_warning_ratio: float = Field(default=0.70, ge=0.0, le=1.0)
     context_summary_ratio: float = Field(default=0.75, ge=0.0, le=1.0)
     context_target_ratio: float = Field(default=0.55, ge=0.0, le=1.0)
     summary_protected_messages: int = Field(default=20, ge=0)
@@ -164,8 +163,6 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_context_and_affinity_ranges(self) -> "Settings":
         self.remorise_data_dir = self.remorise_data_dir.expanduser().resolve()
-        if self.context_warning_ratio > self.context_summary_ratio:
-            raise ValueError("context_warning_ratio must not exceed context_summary_ratio")
         if self.context_target_ratio >= self.context_summary_ratio:
             raise ValueError("context_target_ratio must be below context_summary_ratio")
         if self.affinity_min > self.affinity_max:

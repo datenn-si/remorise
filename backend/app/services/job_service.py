@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from contextlib import nullcontext
 from typing import Any
 
 from openai import AsyncOpenAI
@@ -9,7 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.config import Settings
 from app.database.models import ConversationMeta, Message, PostJob, Summary, utc_now
-from app.services import memory_lifecycle, raw_log_service, retention_service, summary_service
+from app.schemas.character import CharacterConfig
+from app.services import (
+    context_budget,
+    memory_lifecycle,
+    raw_log_service,
+    retention_service,
+    summary_service,
+)
 from app.services.context_manager import count_tokens
 from app.services.inference_status import BACKGROUND_RETENTION, InferenceActivity
 
@@ -73,24 +81,37 @@ async def enqueue_job(
     return job
 
 
-async def maybe_enqueue_summary(session: AsyncSession, settings: Settings) -> PostJob | None:
-    """Enqueue a summary job when the unsummarized context has grown.
+def _latest_turn_usage(rows: list[Message]) -> int | None:
+    """prompt_tokens + completion_tokens of the newest assistant turn.
 
-    Summarization is a background job (spec §11): the
-    check runs on the worker, with headroom (the summary ratio), and
-    a turn never waits for the result — it builds its context from
-    the previous settled summary plus the unsummarized tail. Facts
-    are already in long-term memory by the time a range is summarized
-    (stage A writes them in real time), so no extraction has to
-    precede a summary any more.
+    None when that turn stored no usage (or there is no assistant turn
+    yet). An older turn's usage is not a substitute.
     """
-    summary = await session.scalar(
+    for row in reversed(rows):
+        if row.role != "assistant":
+            continue
+        usage = (row.metadata_json or {}).get("usage")
+        if not isinstance(usage, dict):
+            return None
+        try:
+            prompt = int(usage.get("prompt_tokens") or 0)
+            completion = int(usage.get("completion_tokens") or 0)
+        except (TypeError, ValueError):
+            return None
+        return prompt + completion
+    return None
+
+
+async def _active_summary(session: AsyncSession) -> Summary | None:
+    return await session.scalar(
         select(Summary)
         .where(Summary.active.is_(True), Summary.archived_at.is_(None))
         .order_by(Summary.id.desc())
     )
-    covered_until = summary.end_message_id if summary else 0
-    rows = list(
+
+
+async def _unsummarized_messages(session: AsyncSession, covered_until: int) -> list[Message]:
+    return list(
         (
             await session.scalars(
                 select(Message)
@@ -99,26 +120,69 @@ async def maybe_enqueue_summary(session: AsyncSession, settings: Settings) -> Po
             )
         ).all()
     )
-    protected = (
-        rows[-settings.summary_protected_messages :]
-        if settings.summary_protected_messages > 0
-        else []
-    )
-    candidates = rows[: len(rows) - len(protected)] if protected else rows
-    if not candidates:
+
+
+async def maybe_enqueue_summary(
+    session: AsyncSession,
+    settings: Settings,
+    character: CharacterConfig,
+    activity: InferenceActivity | None = None,
+) -> PostJob | None:
+    """Enqueue a summary when the latest turn's context crossed the ratio.
+
+    The decision uses that turn's raw usage (prompt + completion). Only
+    a turn with no usage falls back to tokenizing the unsummarized
+    context. The range then keeps the protected tail and enough older
+    messages to land on ``context_target_ratio``. Counting missing
+    token keys happens here, inside the worker, and only for the model
+    that is current at this decision.
+    """
+    summary = await _active_summary(session)
+    covered_until = summary.end_message_id if summary else 0
+    rows = await _unsummarized_messages(session, covered_until)
+    if not rows:
         return None
-    serialized = (
-        (summary.content if summary else "")
-        + "\n"
-        + "\n".join(f"{row.role}: {row.content}" for row in rows)
+    threshold = int(settings.llm_context_size * settings.context_summary_ratio)
+    usage = _latest_turn_usage(rows)
+    if usage is None:
+        serialized = (
+            (summary.content if summary else "")
+            + "\n"
+            + "\n".join(f"{row.role}: {row.content}" for row in rows)
+        )
+        usage = await count_tokens(serialized, settings)
+    if usage < threshold:
+        return None
+
+    holder = activity.background(JOB_SUMMARY) if activity is not None else nullcontext()
+    async with holder:
+        await context_budget.fill_current_model_tokens(session, settings, rows, summary)
+        profile = await context_budget.load_profile(session)
+        fixed_tokens = await context_budget.fixed_prompt_tokens(
+            session, settings, character, profile
+        )
+        state_tokens = await context_budget.state_line_tokens(session, settings)
+
+    model = settings.llm_model
+    previous = context_budget.model_count(summary.token if summary else None, model) or 0
+    estimate = context_budget.summary_token_estimate(previous, settings.llm_max_tokens)
+    budget = context_budget.older_keep_budget(
+        settings,
+        summary_tokens=estimate,
+        fixed_tokens=fixed_tokens,
+        state_tokens=state_tokens,
     )
-    context_size = await count_tokens(serialized, settings)
-    if context_size >= int(settings.llm_context_size * settings.context_warning_ratio):
-        logger.warning("Conversation context is approaching its configured limit")
-    if context_size < int(settings.llm_context_size * settings.context_summary_ratio):
+    older, _protected = context_budget.split_protected(rows, settings.summary_protected_messages)
+    if not older:
+        await session.commit()
+        return None
+    tokens = {row.id: context_budget.model_count(row.token, model) or 0 for row in older}
+    end_id = context_budget.summary_range_end(older, tokens, budget)
+    if end_id is None:
+        await session.commit()
         return None
     meta = await get_meta(session)
-    return await enqueue_job(session, JOB_SUMMARY, candidates[0].id, candidates[-1].id, meta.epoch)
+    return await enqueue_job(session, JOB_SUMMARY, older[0].id, end_id, meta.epoch)
 
 
 async def pipeline_status(session: AsyncSession) -> dict[str, Any]:
@@ -287,7 +351,12 @@ async def worker_loop(app: Any) -> None:
         try:
             async with session_factory() as session:
                 await recover_jobs(session, settings)
-                await maybe_enqueue_summary(session, settings)
+            # Token columns are merged here and on the chat turn. Both
+            # hold this lock, so a recount cannot drop a count the turn
+            # just wrote.
+            async with inference_lock:
+                async with session_factory() as session:
+                    await maybe_enqueue_summary(session, settings, app.state.character, activity)
             await drain_pending_jobs(
                 session_factory, client, settings, inference_lock, activity=activity
             )

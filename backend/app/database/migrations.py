@@ -6,12 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 logger = logging.getLogger(__name__)
 
-# The schema version of the current model definitions. Version 1 is
-# the first schema managed by this migration chain: databases created
-# by earlier builds carry no stamp, and their tables were built by the
-# same create_all from the same definitions, so they are version 1 by
-# definition and are stamped as such on first boot.
-SCHEMA_VERSION = 1
+# The schema version of the current model definitions. An unstamped
+# database was just built by create_all from these definitions, so it
+# is stamped at SCHEMA_VERSION without running steps. A database
+# stamped by an older build runs the steps from that version.
+SCHEMA_VERSION = 2
 
 Migration = Callable[[AsyncConnection], Awaitable[None]]
 
@@ -21,7 +20,24 @@ Migration = Callable[[AsyncConnection], Awaitable[None]]
 # SCHEMA_VERSION is bumped to match. Steps run one transaction each,
 # and the stamp is written inside the step's transaction, so a failed
 # step leaves the database at its previous version.
-MIGRATIONS: dict[int, Migration] = {}
+
+
+async def _migrate_v1_to_v2(connection: AsyncConnection) -> None:
+    """Add per-model token counts. Values are filled when used, not here."""
+    await connection.execute(text("ALTER TABLE messages ADD COLUMN token JSON"))
+    await connection.execute(text("ALTER TABLE summaries ADD COLUMN token JSON"))
+    await connection.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS system_prompt_tokens ("
+            "model_id VARCHAR(200) NOT NULL, "
+            "content_hash VARCHAR(64) NOT NULL, "
+            "token_count INTEGER NOT NULL, "
+            "PRIMARY KEY (model_id, content_hash))"
+        )
+    )
+
+
+MIGRATIONS: dict[int, Migration] = {1: _migrate_v1_to_v2}
 
 
 async def _read_version(connection: AsyncConnection) -> int | None:

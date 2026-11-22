@@ -9,7 +9,6 @@ class OperationalValues(BaseModel):
     llm_presence_penalty: float | None
     llm_repeat_penalty: float | None
     llm_context_size: int
-    context_warning_ratio: float
     context_summary_ratio: float
     context_target_ratio: float
     summary_protected_messages: int
@@ -88,7 +87,6 @@ class OperationalSettingsUpdate(BaseModel):
     llm_presence_penalty: float | None = Field(default=None, ge=-2.0, le=2.0)
     llm_repeat_penalty: float | None = Field(default=None, gt=0.0)
     llm_context_size: int | None = Field(default=None, gt=0)
-    context_warning_ratio: float | None = Field(default=None, ge=0.0, le=1.0)
     context_summary_ratio: float | None = Field(default=None, ge=0.0, le=1.0)
     context_target_ratio: float | None = Field(default=None, ge=0.0, le=1.0)
     summary_protected_messages: int | None = Field(default=None, ge=0)

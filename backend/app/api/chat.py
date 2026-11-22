@@ -25,8 +25,10 @@ from app.schemas.chat import (
 from app.schemas.events import SSE_EVENT_SCHEMAS, APIError
 from app.schemas.state import CharacterStateResponse, StateAnalysis
 from app.services import profile_store, raw_log_service
+from app.services.context_budget import message_token_text, with_model_count
 from app.services.context_manager import (
     build_system_prompt,
+    count_tokens,
     elapsed_since_text,
     format_current_time,
     history_as_messages,
@@ -139,7 +141,7 @@ def _previous_missed_terms(rows: list[Message]) -> list[str]:
     return []
 
 
-def _apply_handover_limits(
+async def _apply_handover_limits(
     settings: Settings,
     delivered: list[DeliveredMemory],
     resident: list[DeliveredMemory],
@@ -150,23 +152,24 @@ def _apply_handover_limits(
     latest set is capped by count, then the combined rendering is
     trimmed to the token budget — resident entries (least recently
     linked last in the list) go first, then the latest set's tail.
-    The budget is measured on the rendered text; character count is
-    the conservative proxy the tokenizer fallback also uses.
+    The budget counts tokens of each rendered memory line.
     """
     latest = delivered[: settings.memory_handover_limit]
     resident_kept = [
         item for item in resident if all(item.memory.id != other.memory.id for other in latest)
     ]
+    latest_tokens = [await count_tokens(memory_line(item), settings) for item in latest]
+    resident_tokens = [await count_tokens(memory_line(item), settings) for item in resident_kept]
 
     def rendered() -> int:
-        return sum(len(memory_line(item)) for item in latest) + sum(
-            len(memory_line(item)) for item in resident_kept
-        )
+        return sum(latest_tokens) + sum(resident_tokens)
 
     while resident_kept and rendered() > settings.memory_handover_token_budget:
         resident_kept.pop()
+        resident_tokens.pop()
     while len(latest) > 1 and rendered() > settings.memory_handover_token_budget:
         latest.pop()
+        latest_tokens.pop()
     return latest, resident_kept
 
 
@@ -310,6 +313,7 @@ async def _prepare_turn(
             applied_state_payload = CharacterStateResponse.model_validate(state).model_dump(
                 mode="json"
             )
+            delivered, resident = await _apply_handover_limits(settings, delivered, resident)
             if not record.get("emotion_applied") and not await state_application_exists(
                 session, user_message
             ):
@@ -353,7 +357,7 @@ async def _prepare_turn(
                 profile=profile,
                 birthday_today=birthday_today,
             )
-            delivered = agent.delivered
+            delivered, resident = await _apply_handover_limits(settings, agent.delivered, resident)
             ask_back = agent.ask_back
             notification = agent.notification
             memory_search_debug = agent.debug_payload()
@@ -395,7 +399,10 @@ async def _prepare_turn(
             if payload is not None:
                 applied_state_payload = payload
 
-        latest, resident_kept = _apply_handover_limits(settings, delivered, resident)
+        if reuse_front_stage and record is None:
+            # Legacy turns have no stored disclosure. Still bound whatever
+            # resident set stage C would otherwise receive in full.
+            delivered, resident = await _apply_handover_limits(settings, delivered, resident)
         summary = await session.scalar(
             select(Summary)
             .where(Summary.active.is_(True), Summary.archived_at.is_(None))
@@ -410,8 +417,8 @@ async def _prepare_turn(
             request.app.state.character,
             state,
             summary=summary,
-            latest=latest,
-            resident=resident_kept,
+            latest=delivered,
+            resident=resident,
             ask_back=ask_back,
             notification=notification,
             current_time=format_current_time(now_local),
@@ -543,9 +550,15 @@ async def _stream_turn(
                 metadata["state_analysis"] = prep.front_state_analysis
             if prep.memory_search_debug is not None:
                 metadata["memory_search"] = prep.memory_search_debug
+            settings = request.app.state.settings
+            if saw_usage:
+                reply_tokens = completion_tokens
+            else:
+                reply_tokens = await count_tokens(final_answer, settings)
             assistant_message = Message(
                 role="assistant",
                 content=final_answer,
+                token=with_model_count(None, settings.llm_model, reply_tokens),
                 metadata_json=metadata or None,
             )
             write_session.add(assistant_message)
@@ -779,11 +792,15 @@ _SSE_RESPONSES: dict[int | str, dict[str, Any]] = {
 )
 async def send_message(payload: ChatRequest, request: Request) -> StreamingResponse:
     async def prepare() -> int:
+        settings = request.app.state.settings
         async with request.app.state.session_factory() as session:
             user_message = Message(role="user", content=payload.message)
             session.add(user_message)
             await session.commit()
             await session.refresh(user_message)
+            counted = await count_tokens(message_token_text(user_message), settings)
+            user_message.token = with_model_count(None, settings.llm_model, counted)
+            await session.commit()
             return user_message.id
 
     return await _execute_turn(request, prepare, reuse_front_stage=False)

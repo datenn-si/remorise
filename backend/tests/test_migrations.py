@@ -84,6 +84,37 @@ async def test_missing_step_stops_at_the_last_applied_version(tmp_path, monkeypa
     await engine.dispose()
 
 
+async def test_v1_shaped_database_migrates_to_v2(tmp_path) -> None:
+    engine = create_engine(f"sqlite+aiosqlite:///{tmp_path / 'v1.db'}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+        # Roll the fresh schema back to the v1 shape. Startup on a real
+        # v1 database runs create_all first (which restores the table
+        # below), then the migration step, so the step must tolerate
+        # the table already existing.
+        await connection.execute(text("DROP TABLE system_prompt_tokens"))
+        await connection.execute(text("ALTER TABLE messages DROP COLUMN token"))
+        await connection.execute(text("ALTER TABLE summaries DROP COLUMN token"))
+    await _stamp(engine, 1)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    await initialize_database(engine, factory)
+    assert await _version(engine) == 2
+    async with engine.connect() as connection:
+        message_columns = {
+            row[1] for row in await connection.execute(text("PRAGMA table_info(messages)"))
+        }
+        summary_columns = {
+            row[1] for row in await connection.execute(text("PRAGMA table_info(summaries)"))
+        }
+        tables = set(
+            await connection.scalars(text("SELECT name FROM sqlite_master WHERE type = 'table'"))
+        )
+    assert "token" in message_columns
+    assert "token" in summary_columns
+    assert "system_prompt_tokens" in tables
+    await engine.dispose()
+
+
 async def test_newer_database_is_refused(tmp_path) -> None:
     engine = create_engine(f"sqlite+aiosqlite:///{tmp_path / 'newer.db'}")
     await _stamp(engine, migrations.SCHEMA_VERSION + 1)

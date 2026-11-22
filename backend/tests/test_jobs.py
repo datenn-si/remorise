@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from app.config import Settings
 from app.database.models import Message, PostJob, Summary
 from app.database.session import create_engine, initialize_database
+from app.schemas.character import CharacterConfig
 from app.services import job_service
 
 
@@ -53,17 +54,17 @@ async def test_maybe_enqueue_summary_at_ratio_with_headroom(tmp_path: Path) -> N
     settings = Settings(
         llm_context_size=1000,
         context_summary_ratio=0.5,
-        context_warning_ratio=0.4,
         context_target_ratio=0.3,
         summary_protected_messages=4,
     )
+    character = CharacterConfig(name="テスト")
     async with factory() as session:
-        job = await job_service.maybe_enqueue_summary(session, settings)
+        job = await job_service.maybe_enqueue_summary(session, settings, character)
         assert job is not None
         assert job.kind == job_service.JOB_SUMMARY
         assert job.start_message_id == ids[0]
         assert job.end_message_id == ids[-5]
-        again = await job_service.maybe_enqueue_summary(session, settings)
+        again = await job_service.maybe_enqueue_summary(session, settings, character)
         assert again is not None and again.id == job.id
         assert len((await session.scalars(select(PostJob))).all()) == 1
     await engine.dispose()
@@ -75,7 +76,12 @@ async def test_maybe_enqueue_summary_below_ratio_does_nothing(tmp_path: Path) ->
     await add_messages(factory, 3, text="短い")
     settings = Settings(llm_context_size=16384)
     async with factory() as session:
-        assert await job_service.maybe_enqueue_summary(session, settings) is None
+        assert (
+            await job_service.maybe_enqueue_summary(
+                session, settings, CharacterConfig(name="テスト")
+            )
+            is None
+        )
         assert (await session.scalars(select(PostJob))).all() == []
     await engine.dispose()
 

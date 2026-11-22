@@ -44,7 +44,6 @@ OPERATIONAL_FIELDS: tuple[str, ...] = (
     "llm_presence_penalty",
     "llm_repeat_penalty",
     "llm_context_size",
-    "context_warning_ratio",
     "context_summary_ratio",
     "context_target_ratio",
     "summary_protected_messages",

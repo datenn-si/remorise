@@ -18,7 +18,6 @@ export type OperationalValues = {
   llm_presence_penalty: number | null;
   llm_repeat_penalty: number | null;
   llm_context_size: number;
-  context_warning_ratio: number;
   context_summary_ratio: number;
   context_target_ratio: number;
   summary_protected_messages: number;

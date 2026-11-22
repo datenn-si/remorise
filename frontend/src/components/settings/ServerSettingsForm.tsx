@@ -56,7 +56,6 @@ const GROUPS: { title: string; fields: FieldDef[]; gateKey?: OperationalField }[
   {
     title: '文脈と要約',
     fields: [
-      { key: 'context_warning_ratio', label: '文脈の警告比率', kind: 'number', step: '0.05' },
       { key: 'context_summary_ratio', label: '要約を開始する比率', kind: 'number', step: '0.05' },
       { key: 'context_target_ratio', label: '要約後の目標比率', kind: 'number', step: '0.05' },
       {

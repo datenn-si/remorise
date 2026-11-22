@@ -65,6 +65,10 @@ class Message(Base):
     )
     role: Mapped[str] = mapped_column(String(20))
     content: Mapped[str] = mapped_column(Text, default="")
+    # Per-model sizes, ``{"model id": token count}``. A missing key is
+    # counted later, and only for the model in use when a summary is
+    # decided. Old keys stay so switching back does not recount.
+    token: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     tool_calls: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON, nullable=True)
     tool_call_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     metadata_json: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON, nullable=True)
@@ -80,6 +84,9 @@ class Summary(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     content: Mapped[str] = mapped_column(Text)
+    # Same shape as ``Message.token``: one count per model that has
+    # actually summarized with this text.
+    token: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     start_message_id: Mapped[int] = mapped_column(Integer)
     end_message_id: Mapped[int] = mapped_column(Integer)
     active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
@@ -280,6 +287,22 @@ class LlmRawLog(Base):
     start_message_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     end_message_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class SystemPromptTokens(Base):
+    """Measured size of the stable part of the system prompt.
+
+    The model id and the text hash are separate columns. Hashing the
+    two together would hide which one changed. A model keeps the row
+    for the text it last measured; older hashes for that model are
+    deleted when the text changes.
+    """
+
+    __tablename__ = "system_prompt_tokens"
+
+    model_id: Mapped[str] = mapped_column(String(200), primary_key=True)
+    content_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    token_count: Mapped[int] = mapped_column(Integer)
 
 
 class AppSetting(Base):

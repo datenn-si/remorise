@@ -8,6 +8,8 @@ from app.config import Settings
 from app.database.models import Message, Summary
 from app.llm.client import summarize_text
 from app.services import raw_log_service
+from app.services.context_budget import with_model_count
+from app.services.context_manager import count_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -65,9 +67,11 @@ async def summarize_range(
         return False
     if current_summary:
         current_summary.active = False
+    counted = await count_tokens(summary_text, settings)
     session.add(
         Summary(
             content=summary_text,
+            token=with_model_count(None, settings.llm_model, counted),
             start_message_id=min(
                 rows[0].id, current_summary.start_message_id if current_summary else rows[0].id
             ),

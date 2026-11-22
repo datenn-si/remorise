@@ -20,7 +20,6 @@ const VALUES: OperationalValues = {
   llm_presence_penalty: null,
   llm_repeat_penalty: null,
   llm_context_size: 16384,
-  context_warning_ratio: 0.7,
   context_summary_ratio: 0.75,
   context_target_ratio: 0.55,
   summary_protected_messages: 20,
